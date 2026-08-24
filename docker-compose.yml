@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  gsg-id-postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gsg_id
+      POSTGRES_PASSWORD: change-me-in-secrets-manager
+      POSTGRES_DB: gsg_id
+    ports:
+      - "5432:5432"
+    volumes:
+      - gsg_id_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gsg_id -d gsg_id"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  gsg-id-redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  gsg-id-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      gsg-id-postgres:
+        condition: service_healthy
+      gsg-id-redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DB_HOST: gsg-id-postgres
+      REDIS_HOST: gsg-id-redis
+    ports:
+      - "3000:3000"
+
+volumes:
+  gsg_id_pg_data:

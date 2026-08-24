@@ -1,0 +1,200 @@
+name: GSG Platform Kernel CI
+
+# Quality gate avant tout marquage de version (v1.0 et suivantes) : ce workflow doit passer en
+# entier, y compris le job `test-e2e-and-redis-physical` (le harness Redis physique — voir
+# test/integration/redis/ — n'était jusqu'ici JAMAIS exécuté automatiquement, seulement décrit
+# et laissé pour exécution manuelle). C'est la fermeture de cette lacune, pas une nouvelle
+# fonctionnalité : le code des tests existait déjà, seul le déclenchement automatisé manquait.
+#
+# NOTE — npm install plutôt que npm ci, pas de cache npm : aucun package-lock.json n'existe
+# encore dans ce dépôt (le projet a été construit sans accès réseau, sans jamais exécuter
+# `npm install` réel). `npm ci` et le cache `actions/setup-node` (cache: npm) exigent tous
+# deux un lockfile déjà présent — recommandation avant la première exécution réelle de ce
+# workflow : lancer `npm install` en local (avec accès réseau), committer le
+# `package-lock.json` généré, puis (1) remplacer les 4 `npm install` par `npm ci`,
+# (2) réajouter `cache: npm` sous chaque bloc `actions/setup-node@v4` — plus rapide et
+# strictement reproductible dans les deux cas.
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch: {}
+
+env:
+  NODE_VERSION: '20.x'
+
+jobs:
+  lint:
+    name: Lint (ESLint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: npm install
+      - run: npx eslint "src/**/*.ts"
+
+  build:
+    name: Build (nest build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: npm install
+      - run: npm run build
+
+  test-unit-integration:
+    name: Tests unitaires et intégration (mockés)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: npm install
+      - run: npm test -- --ci --coverage
+      - name: Publier le rapport de couverture
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-unit-integration
+          path: coverage/
+          retention-days: 14
+
+  # -------------------------------------------------------------------------
+  # QUALITY GATE — e2e + suite Redis physique (test/integration/redis/*.redis-spec.ts).
+  #
+  # Service containers réels (pas des mocks) : PostgreSQL et Redis, tous deux avec healthcheck
+  # avant que le job ne démarre le harness — sans quoi XREADGROUP/migration:run échoueraient
+  # sur une connexion pas encore prête, un faux négatif classique en CI.
+  #
+  # Ce job est le point que la directive d'exécution nomme explicitement "verrou
+  # d'intégration" : sa réussite est une condition NÉCESSAIRE au marquage v1.0, pas une
+  # vérification parmi d'autres — matérialisé ici par le job `quality-gate` en fin de fichier,
+  # qui agrège tous les jobs via `needs` et sert de check unique pour une règle de protection
+  # de branche GitHub (Settings → Branches → Require status checks).
+  # -------------------------------------------------------------------------
+  test-e2e-and-redis-physical:
+    name: Tests e2e + suite Redis physique (quality gate)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: gsg_id
+          POSTGRES_PASSWORD: gsg_id_ci_password
+          POSTGRES_DB: gsg_id
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U gsg_id -d gsg_id"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      NODE_ENV: test
+      PORT: 3000
+      API_GLOBAL_PREFIX: api/v1
+
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USERNAME: gsg_id
+      DB_PASSWORD: gsg_id_ci_password
+      DB_DATABASE: gsg_id
+      DB_SSL: 'false'
+
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ''
+
+      # Secrets CI JETABLES — jamais réutilisés hors de ce job, jamais les mêmes qu'en
+      # production. La validation stricte (validation.schema.ts, OWASP ASVS 2.10) rejette
+      # toute valeur trop courte, donc un simple "changeme" ferait échouer le bootstrap
+      # avant même d'atteindre les tests.
+      JWT_ACCESS_SECRET: ci-only-access-secret-never-used-outside-pipeline-32
+      JWT_ACCESS_TTL_SECONDS: 900
+      JWT_REFRESH_SECRET: ci-only-refresh-secret-never-used-outside-pipeline-32
+      JWT_REFRESH_TTL_SECONDS: 2592000
+      JWT_ISSUER: https://ci.gsg.africa
+      JWT_AUDIENCE: gsg-platform-ci
+
+      MFA_ISSUER_NAME: GSG ID (CI)
+      MFA_TOTP_WINDOW: 1
+      MFA_ENCRYPTION_KEY_HEX: '00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff'
+
+      THROTTLE_TTL_SECONDS: 60
+      THROTTLE_LIMIT: 20
+
+      EVENT_BUS_STREAM_PREFIX: gsg.kernel.events
+
+      OUTBOX_POLL_INTERVAL_MS: 200
+      OUTBOX_BATCH_SIZE: 50
+      OUTBOX_MAX_RETRIES: 10
+
+      SUPABASE_ALLOWED_PROJECT_URLS: https://ci-placeholder-project.supabase.co
+      SUPABASE_JWKS_CACHE_TTL_SECONDS: 300
+      SUPABASE_JWKS_FETCH_TIMEOUT_MS: 4000
+      SUPABASE_JWKS_FORCED_REFRESH_COOLDOWN_SECONDS: 10
+
+      AUDIT_CONSUMER_GROUP: audit-consumers
+      AUDIT_CONSUMER_BATCH_SIZE: 10
+      AUDIT_CONSUMER_BLOCK_MS: 2000
+      AUDIT_CONSUMER_MAX_DELIVERIES: 5
+      AUDIT_CONSUMER_CLAIM_IDLE_MS: 10000
+      AUDIT_CONSUMER_CLAIM_INTERVAL_MS: 5000
+
+      REF_ENGINE_VILLES_CONSUMER_GROUP: referential-engine-villes-consumers
+      REF_ENGINE_VILLES_CONSUMER_BATCH_SIZE: 20
+      REF_ENGINE_VILLES_CONSUMER_BLOCK_MS: 2000
+      REF_ENGINE_VILLES_CONSUMER_CLAIM_IDLE_MS: 10000
+      REF_ENGINE_VILLES_CONSUMER_CLAIM_INTERVAL_MS: 5000
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - run: npm install
+
+      - name: Exécuter les migrations Postgres
+        run: npm run migration:run
+
+      - name: Tests e2e (test/e2e/*.e2e-spec.ts)
+        run: npm run test:e2e
+
+      - name: Suite Redis physique (test/integration/redis/*.redis-spec.ts) — QUALITY GATE
+        run: npm run test:redis
+
+  quality-gate:
+    name: Quality Gate (agrégat)
+    runs-on: ubuntu-latest
+    needs: [lint, build, test-unit-integration, test-e2e-and-redis-physical]
+    if: always()
+    steps:
+      - name: Vérifier que tous les jobs ont réussi
+        run: |
+          if [ "${{ contains(needs.*.result, 'failure') }}" = "true" ] || \
+             [ "${{ contains(needs.*.result, 'cancelled') }}" = "true" ]; then
+            echo "Au moins un job requis a échoué ou a été annulé — quality gate NON franchi."
+            exit 1
+          fi
+          echo "Tous les jobs ont réussi — quality gate franchi."

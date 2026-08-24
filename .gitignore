@@ -1,0 +1,49 @@
+# ---- Dépendances ----
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ---- Build ----
+dist/
+build/
+*.tsbuildinfo
+
+# ---- Secrets et configuration locale ----
+# Exclusion stricte — .env.example reste versionné (aucune valeur réelle), .env ne l'est
+# jamais. Tout fichier .env.* additionnel (local, staging, production) suit la même règle.
+.env
+.env.local
+.env.*.local
+.env.production
+.env.staging
+!.env.example
+
+# ---- Tests et couverture ----
+coverage/
+.nyc_output/
+junit.xml
+
+# ---- Artefacts CI locaux (tests physiques Redis, e2e) ----
+test-results/
+
+# ---- Logs ----
+*.log
+logs/
+
+# ---- IDE / éditeurs ----
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+
+# ---- Divers ----
+*.pid
+*.seed
+*.pid.lock
+.eslintcache
