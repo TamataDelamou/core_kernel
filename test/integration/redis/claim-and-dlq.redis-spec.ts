@@ -116,8 +116,20 @@ describe('[Redis physique] Réclamation (XCLAIM) et bascule Dead-Letter Queue', 
     // Le message poison a-t-il été retiré de la liste des messages en attente (XACK final
     // après bascule DLQ) ? Sans ce XACK, le message resterait indéfiniment "pending" malgré
     // sa présence en DLQ — un bug de fuite que seul un test physique révélerait.
-    const resumePending = await rawRedis.xpending(streamKey, consumerGroup);
-    const nombreEnAttente = Array.isArray(resumePending) ? Number(resumePending[0]) : 0;
-    expect(nombreEnAttente).toBe(0);
+    //
+    // waitUntil plutôt qu'une vérification unique et immédiate : le XACK survient dans le
+    // `finally` de moveEntryToDeadLetter, JUSTE APRÈS l'écriture en base (DLQ) — deux appels
+    // réseau séquentiels, pas atomiques entre eux. Une vérification immédiate de xpending dès
+    // que l'entrée DLQ est détectée en base peut s'exécuter avant que le XACK, qui suit, n'ait
+    // eu le temps de se propager — condition de course dans CE TEST, pas dans la production
+    // (le `finally` garantit déjà le XACK de façon inconditionnelle côté service réel).
+    await waitUntil(
+      async () => {
+        const resumePending = await rawRedis.xpending(streamKey, consumerGroup);
+        const nombreEnAttente = Array.isArray(resumePending) ? Number(resumePending[0]) : null;
+        return nombreEnAttente === 0 ? true : null;
+      },
+      { timeoutMs: 5000, intervalMs: 200, description: 'XACK final après bascule DLQ (XPENDING doit retomber à 0)' },
+    );
   }, 20000);
 });
