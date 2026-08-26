@@ -46,6 +46,7 @@ async function buildUseCase(overrides: MockOverrides = {}) {
         useValue: {
           getPaysDefaults: jest.fn().mockResolvedValue(overrides.paysDefaults ?? null),
           enrichCodes: jest.fn().mockResolvedValue({ paysCode: null, deviseCode: null, langueCode: null }),
+          resolveLocale: jest.fn().mockResolvedValue(null),
         },
       },
       {
@@ -157,6 +158,7 @@ describe('ResolveAppConfigUseCase (intégration application) — KER-CFG-02', ()
           useValue: {
             getPaysDefaults: getPaysDefaultsMock,
             enrichCodes: jest.fn().mockResolvedValue({ paysCode: 'GN', deviseCode: 'GNF', langueCode: 'fr' }),
+            resolveLocale: jest.fn().mockResolvedValue('fr-GN'),
           },
         },
         { provide: ORGANISATION_LOOKUP_PORT, useValue: { existsAndActive: jest.fn().mockResolvedValue(true) } },
