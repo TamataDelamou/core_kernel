@@ -1,5 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule } from '@nestjs/config';
+import configuration from '../../../src/config/configuration';
 import { v4 as uuidv4 } from 'uuid';
 import Redis from 'ioredis';
 import {
@@ -40,6 +42,7 @@ describe('[Redis physique] Consumer Group — lecture, persistance, ACK réels',
 
     moduleRef = await Test.createTestingModule({
       imports: [
+        ConfigModule.forRoot({ load: [configuration], isGlobal: true }),
         TypeOrmModule.forRoot(testTypeOrmOptions([AuditEvenementOrmEntity, EvenementEnEchecOrmEntity])),
         TypeOrmModule.forFeature([AuditEvenementOrmEntity, EvenementEnEchecOrmEntity]),
       ],

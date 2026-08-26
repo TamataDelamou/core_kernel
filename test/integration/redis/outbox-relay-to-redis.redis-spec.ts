@@ -1,5 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule } from '@nestjs/config';
+import configuration from '../../../src/config/configuration';
 import { v4 as uuidv4 } from 'uuid';
 import {
   isolateRedisNamespaceForThisFile,
@@ -45,7 +47,11 @@ describe('[Redis physique] Outbox → Redis Streams (OutboxRelayService)', () =>
     process.env.OUTBOX_POLL_INTERVAL_MS = '200';
 
     moduleRef = await Test.createTestingModule({
-      imports: [TypeOrmModule.forRoot(testTypeOrmOptions([OutboxEventOrmEntity])), TypeOrmModule.forFeature([OutboxEventOrmEntity])],
+      imports: [
+        ConfigModule.forRoot({ load: [configuration], isGlobal: true }),
+        TypeOrmModule.forRoot(testTypeOrmOptions([OutboxEventOrmEntity])),
+        TypeOrmModule.forFeature([OutboxEventOrmEntity]),
+      ],
       providers: [
         TransactionContextService,
         { provide: OUTBOX_EVENT_REPOSITORY, useClass: TypeOrmOutboxEventRepository },

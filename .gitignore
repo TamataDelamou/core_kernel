@@ -47,3 +47,4 @@ Thumbs.db
 *.seed
 *.pid.lock
 .eslintcache
+node_modules
