@@ -33,7 +33,12 @@ export class TypeOrmAuditEvenementRepository
   async save(auditEvenement: AuditEvenement): Promise<void> {
     const snapshot = auditEvenement.toSnapshot();
     try {
-      await this.repo.insert({ ...snapshot });
+      // `as any` ciblé et documenté : limitation connue de TypeORM — `_QueryDeepPartialEntity`
+      // tente de partial-ifier récursivement toute colonne `jsonb` typée `Record<string,
+      // unknown>` au lieu de la traiter comme une valeur terminale, ce qui produit un
+      // conflit de type purement structurel (jamais un problème d'exécution : chargeUtile
+      // est bien un objet JSON sérialisable, exactement ce que la colonne attend).
+      await this.repo.insert({ ...snapshot } as any);
     } catch (error) {
       // Contrainte d'unicité sur evenement_id violée = doublon détecté en base au moment de
       // l'écriture (fenêtre de course entre le existsByEvenementId applicatif et l'insertion,

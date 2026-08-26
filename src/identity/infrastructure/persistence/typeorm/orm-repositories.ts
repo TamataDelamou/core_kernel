@@ -9,6 +9,7 @@ import { User } from '../../../domain/entities/user.entity';
 import {
   ExternalIdentityMapping,
   MfaFactor,
+  MfaFactorStatus,
   RefreshToken,
   Role,
   UserRoleAssignment,
@@ -212,12 +213,16 @@ export class TypeOrmMfaFactorRepository
 
   async findActiveByUser(gsgId: string): Promise<MfaFactor | null> {
     const row = await this.repo.findOne({ where: { gsgId, statut: 'actif' } });
-    return row ? MfaFactor.reconstitute(row as MfaFactorOrmEntity & { type: 'totp' }) : null;
+    return row
+      ? MfaFactor.reconstitute({ ...row, type: 'totp' as const, statut: row.statut as MfaFactorStatus })
+      : null;
   }
 
   async findById(id: string): Promise<MfaFactor | null> {
     const row = await this.repo.findOne({ where: { id } });
-    return row ? MfaFactor.reconstitute(row as MfaFactorOrmEntity & { type: 'totp' }) : null;
+    return row
+      ? MfaFactor.reconstitute({ ...row, type: 'totp' as const, statut: row.statut as MfaFactorStatus })
+      : null;
   }
 
   async save(factor: MfaFactor): Promise<void> {

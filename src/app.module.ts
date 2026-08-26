@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 import configuration, { AppConfiguration } from './config/configuration';
@@ -28,13 +28,13 @@ import { TransactionInterceptor } from './common/interceptors/transaction.interc
 
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (configService: ConfigService<AppConfiguration>) => ({
+      useFactory: (configService: ConfigService<AppConfiguration>): TypeOrmModuleOptions => ({
         type: 'postgres' as const,
-        host: configService.get('database.host', { infer: true }),
-        port: configService.get('database.port', { infer: true }),
-        username: configService.get('database.username', { infer: true }),
-        password: configService.get('database.password', { infer: true }),
-        database: configService.get('database.database', { infer: true }),
+        host: configService.get('database.host', { infer: true }) as string,
+        port: configService.get('database.port', { infer: true }) as number,
+        username: configService.get('database.username', { infer: true }) as string,
+        password: configService.get('database.password', { infer: true }) as string,
+        database: configService.get('database.database', { infer: true }) as string,
         ssl: configService.get('database.ssl', { infer: true })
           ? { rejectUnauthorized: true }
           : false,

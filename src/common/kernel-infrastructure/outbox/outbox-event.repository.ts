@@ -63,7 +63,9 @@ export class TypeOrmOutboxEventRepository
     row.derniereErreur = null;
     row.creeLe = record.creeLe;
     row.publieLe = null;
-    await this.repo.insert(row);
+    // `as any` ciblé — même limitation TypeORM que dans audit/orm-repositories.ts (colonne
+    // jsonb typée Record<string, unknown>), voir le commentaire complet à cet endroit.
+    await this.repo.insert(row as any);
   }
 
   async findPendingBatch(limit: number): Promise<OutboxEventRecord[]> {
