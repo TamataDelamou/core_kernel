@@ -16,9 +16,12 @@ import { ProductRegistryModule } from './product-registry/product-registry.modul
 import { AppConfigModule } from './app-config/app-config.module';
 import { KernelInfrastructureModule } from './common/kernel-infrastructure/kernel-infrastructure.module';
 import { TransactionInterceptor } from './common/interceptors/transaction.interceptor';
+import { JwtSharedModule } from './common/jwt-shared.module';
 
 @Module({
   imports: [
+    JwtSharedModule,
+
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],

@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { JwtModule } from '@nestjs/jwt';
 
 import {
   ExternalIdentityMappingOrmEntity,
@@ -75,10 +74,8 @@ import { OrgModule } from '../org/org.module';
       MfaFactorOrmEntity,
       ExternalIdentityMappingOrmEntity,
     ]),
-    // Le module JwtService est utilisé uniquement pour signer/vérifier ; les secrets et TTL
-    // réels sont résolus dynamiquement par JwtTokenService/JwtAuthGuard via ConfigService,
-    // afin de permettre des clés d'access token et de challenge MFA distinctes du refresh token.
-    JwtModule.register({}),
+    // JwtModule est désormais enregistré une seule fois, globalement, dans
+    // common/jwt-shared.module.ts (importé par AppModule) — plus besoin de le réimporter ici.
     // Fournit ORGANISATION_LOOKUP_PORT — ferme le contrôle de portée KER-ORG-03 pour
     // AssignRoleUseCase (attribution de rôle scopé à une organisation).
     OrgModule,
