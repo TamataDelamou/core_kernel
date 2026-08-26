@@ -51,7 +51,9 @@ export class OutboxRelayService implements OnModuleInit, OnModuleDestroy {
     this.stopped = true;
     if (this.pollTimer) clearInterval(this.pollTimer);
     if (this.sweepTimer) clearInterval(this.sweepTimer);
-    await this.redis.quit();
+    // Voir le commentaire détaillé dans redis-streams-consumer.service.ts (même raisonnement,
+    // même correctif) : disconnect() immédiat plutôt que quit() qui attend un blocage en vol.
+    this.redis.disconnect();
   }
 
   /** Traite un lot de lignes en attente. Ré-entrance protégée (un cycle à la fois). */

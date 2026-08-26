@@ -67,7 +67,10 @@ export class VilleRattacheeConsumerService implements OnModuleInit, OnModuleDest
   async onModuleDestroy(): Promise<void> {
     this.stopped = true;
     if (this.claimTimer) clearInterval(this.claimTimer);
-    await this.redis.quit();
+    // Voir le commentaire détaillé dans audit/redis-streams-consumer.service.ts (même
+    // raisonnement, même correctif) : disconnect() immédiat plutôt que quit() qui attend un
+    // blocage en vol.
+    this.redis.disconnect();
   }
 
   private async ensureConsumerGroupExists(): Promise<void> {

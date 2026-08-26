@@ -65,7 +65,16 @@ export class RedisStreamsConsumerService implements OnModuleInit, OnModuleDestro
   async onModuleDestroy(): Promise<void> {
     this.stopped = true;
     if (this.claimTimer) clearInterval(this.claimTimer);
-    await this.redis.quit();
+    // disconnect() plutôt que quit() : quit() envoie la commande QUIT au serveur et ATTEND sa
+    // réponse — si une commande bloquante (XREADGROUP ... BLOCK) est en vol au même instant,
+    // Redis traitant les commandes séquentiellement sur une connexion, quit() doit attendre
+    // la fin du blocage avant de pouvoir fermer proprement. NestJS ferme les providers de
+    // façon séquentielle (pas en parallèle) à l'arrêt de l'application — l'attente cumulée de
+    // plusieurs quit() bloquants peut dépasser le timeout par défaut des hooks Jest (5s),
+    // provoquant un rejet Redis résiduel sans contexte de test valide pour l'absorber.
+    // disconnect() ferme le socket immédiatement, sans attendre — le try/catch de
+    // runReadLoop() absorbe déjà le rejet qui en résulte pour la commande interrompue.
+    this.redis.disconnect();
   }
 
   private async ensureConsumerGroupExists(): Promise<void> {
