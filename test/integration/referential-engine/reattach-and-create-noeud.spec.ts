@@ -8,6 +8,7 @@ import {
 import {
   NIVEAU_ADMINISTRATIF_REPOSITORY,
   NOEUD_HIERARCHIQUE_REPOSITORY,
+  COMPTEUR_VILLES_RATTACHEES_REPOSITORY,
 } from '../../../src/referential-engine/domain/repositories/referential-engine.repositories';
 import { EVENT_PUBLISHER } from '../../../src/common/kernel-ports/event-publisher.interface';
 import {
@@ -125,6 +126,7 @@ describe('ReattachNoeudUseCase (intégration application) — cycle et garde-fou
           },
         },
         { provide: EVENT_PUBLISHER, useValue: { publish: jest.fn() } },
+        { provide: COMPTEUR_VILLES_RATTACHEES_REPOSITORY, useValue: { getCompte: jest.fn().mockResolvedValue(0) } },
       ],
     }).compile();
 
@@ -153,6 +155,7 @@ describe('ReattachNoeudUseCase (intégration application) — cycle et garde-fou
           useValue: { findById: findByIdMock, findChildren: jest.fn().mockResolvedValue([]), save: saveMock },
         },
         { provide: EVENT_PUBLISHER, useValue: { publish: jest.fn() } },
+        { provide: COMPTEUR_VILLES_RATTACHEES_REPOSITORY, useValue: { getCompte: jest.fn().mockResolvedValue(0) } },
       ],
     }).compile();
 
@@ -182,6 +185,7 @@ describe('ReattachNoeudUseCase (intégration application) — cycle et garde-fou
           useValue: { findById: findByIdMock, findChildren: jest.fn().mockResolvedValue([]), save: saveMock },
         },
         { provide: EVENT_PUBLISHER, useValue: { publish: jest.fn().mockResolvedValue(undefined) } },
+        { provide: COMPTEUR_VILLES_RATTACHEES_REPOSITORY, useValue: { getCompte: jest.fn().mockResolvedValue(0) } },
       ],
     }).compile();
 
@@ -199,6 +203,7 @@ describe('ReattachNoeudUseCase (intégration application) — cycle et garde-fou
         ReattachNoeudUseCase,
         { provide: NOEUD_HIERARCHIQUE_REPOSITORY, useValue: { findById: jest.fn().mockResolvedValue(null) } },
         { provide: EVENT_PUBLISHER, useValue: { publish: jest.fn() } },
+        { provide: COMPTEUR_VILLES_RATTACHEES_REPOSITORY, useValue: { getCompte: jest.fn().mockResolvedValue(0) } },
       ],
     }).compile();
 
@@ -228,6 +233,7 @@ describe('SetNoeudActivationUseCase (intégration application) — garde-fou sur
           },
         },
         { provide: EVENT_PUBLISHER, useValue: { publish: jest.fn() } },
+        { provide: COMPTEUR_VILLES_RATTACHEES_REPOSITORY, useValue: { getCompte: jest.fn().mockResolvedValue(0) } },
       ],
     }).compile();
 
@@ -248,6 +254,7 @@ describe('SetNoeudActivationUseCase (intégration application) — garde-fou sur
           useValue: { findById: jest.fn().mockResolvedValue(noeud), findChildren: jest.fn().mockResolvedValue([]), save: saveMock },
         },
         { provide: EVENT_PUBLISHER, useValue: { publish: jest.fn().mockResolvedValue(undefined) } },
+        { provide: COMPTEUR_VILLES_RATTACHEES_REPOSITORY, useValue: { getCompte: jest.fn().mockResolvedValue(0) } },
       ],
     }).compile();
 

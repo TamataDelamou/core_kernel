@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { ResolveAppConfigUseCase } from '../../../src/app-config/application/use-cases/resolve-app-config.use-case';
-import { USER_REFERENTIAL_LOOKUP_PORT } from '../../../src/common/kernel-ports/user-referential-lookup.port';
+import { USER_REFERENTIAL_LOOKUP_PORT, ReferentielNiveau } from '../../../src/common/kernel-ports/user-referential-lookup.port';
 import { ORGANISATION_REFERENTIAL_LOOKUP_PORT } from '../../../src/common/kernel-ports/organisation-referential-lookup.port';
 import { REFERENTIAL_DEFAULTS_LOOKUP_PORT } from '../../../src/common/kernel-ports/referential-defaults-lookup.port';
 import { ORGANISATION_LOOKUP_PORT } from '../../../src/common/kernel-ports/organisation-lookup.port';
@@ -12,7 +12,10 @@ import {
   UniteOperationnelleNotInOrganisationError,
 } from '../../../src/app-config/domain/exceptions/app-config.exceptions';
 
-const REFERENTIEL_VIDE = { paysId: null, deviseId: null, langueId: null, fuseauHoraire: null };
+// Annotation explicite obligatoire : sans elle, TypeScript infère chaque champ comme le
+// type littéral `null` (pas `string | null`), rendant impossible tout `{ ...REFERENTIEL_VIDE,
+// deviseId: 'xxx' }` plus loin dans ce fichier (TS2322 — "string n'est pas assignable à null").
+const REFERENTIEL_VIDE: ReferentielNiveau = { paysId: null, deviseId: null, langueId: null, fuseauHoraire: null };
 
 interface MockOverrides {
   userReferentiel?: typeof REFERENTIEL_VIDE | null;

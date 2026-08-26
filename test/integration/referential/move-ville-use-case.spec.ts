@@ -9,23 +9,34 @@ import {
 } from '../../../src/referential/domain/exceptions/referential.exceptions';
 import { Ville } from '../../../src/referential/domain/entities/ville.entity';
 
-const VILLE_FICTIVE = Ville.create({
-  id: 'ville-1',
-  paysId: 'pays-gn',
-  nom: 'Conakry',
-  referentielHierarchiqueId: 'ancien-noeud',
-});
+// Fonction plutôt que constante partagée : chaque test doit recevoir sa PROPRE instance
+// fraîche. Une constante module-scope unique, mutée par `ville.updateDetails(...)` à
+// l'intérieur du use-case réel, aurait fait fuiter l'état d'un test vers le suivant — c'est
+// exactement le bug qui a produit un faux échec ici (voir aussi le correctif ci-dessous sur
+// `??` vs vérification de présence de clé).
+function villeFictive(): Ville {
+  return Ville.create({
+    id: 'ville-1',
+    paysId: 'pays-gn',
+    nom: 'Conakry',
+    referentielHierarchiqueId: 'ancien-noeud',
+  });
+}
 
 async function buildUseCase(overrides: { existsAndPublishedMock?: jest.Mock; villeExistante?: Ville | null }) {
   const saveMock = jest.fn().mockResolvedValue(undefined);
   const publishMock = jest.fn().mockResolvedValue(undefined);
+  // `??` aurait remplacé un `villeExistante: null` explicite (voulant simuler "introuvable")
+  // par la valeur par défaut — `null` est une valeur "nullish", exactement ce que `??`
+  // court-circuite. Vérifier la présence de la clé distingue "non fourni" de "fourni à null".
+  const villeResolue = 'villeExistante' in overrides ? overrides.villeExistante : villeFictive();
   const moduleRef = await Test.createTestingModule({
     providers: [
       MoveVilleUseCase,
       {
         provide: VILLE_REPOSITORY,
         useValue: {
-          findById: jest.fn().mockResolvedValue(overrides.villeExistante ?? VILLE_FICTIVE),
+          findById: jest.fn().mockResolvedValue(villeResolue),
           save: saveMock,
         },
       },
