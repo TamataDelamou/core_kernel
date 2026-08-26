@@ -56,12 +56,17 @@ export class VilleRattacheeConsumerService implements OnModuleInit, OnModuleDest
 
   async onModuleInit(): Promise<void> {
     await this.ensureConsumerGroupExists();
-    void this.runReadLoop();
+    void this.runReadLoop().catch((error) =>
+      this.logger.error(`Boucle de lecture interrompue de façon inattendue : ${error instanceof Error ? error.message : String(error)}`),
+    );
 
     const claimIntervalMs = this.configService.get('referentialEngineVilles.claimIntervalMs', {
       infer: true,
     }) as number;
-    this.claimTimer = setInterval(() => void this.runClaimCycle(), claimIntervalMs);
+    this.claimTimer = setInterval(
+      () => void this.runClaimCycle().catch((error) => this.logger.error(`Cycle de réclamation inattendu : ${error instanceof Error ? error.message : String(error)}`)),
+      claimIntervalMs,
+    );
   }
 
   async onModuleDestroy(): Promise<void> {
@@ -170,15 +175,16 @@ export class VilleRattacheeConsumerService implements OnModuleInit, OnModuleDest
   private async handleMessage(id: string, fields: RedisStreamFields): Promise<void> {
     const streamKey = this.streamKey();
     const group = this.configService.get('referentialEngineVilles.consumerGroup', { infer: true }) as string;
-    const map = this.parseFields(fields);
-    const type = map.get('type');
-
-    if (type !== TYPE_VILLE_CREATED && type !== TYPE_VILLE_MOVED) {
-      await this.redis.xack(streamKey, group, id);
-      return;
-    }
 
     try {
+      const map = this.parseFields(fields);
+      const type = map.get('type');
+
+      if (type !== TYPE_VILLE_CREATED && type !== TYPE_VILLE_MOVED) {
+        await this.redis.xack(streamKey, group, id);
+        return;
+      }
+
       const chargeUtile = JSON.parse(map.get('chargeUtile') ?? '{}') as Record<string, unknown>;
 
       if (type === TYPE_VILLE_CREATED) {
@@ -193,6 +199,16 @@ export class VilleRattacheeConsumerService implements OnModuleInit, OnModuleDest
 
       await this.redis.xack(streamKey, group, id);
     } catch (error) {
+      // TOUT le corps de la fonction est désormais dans ce seul try/catch — y compris le XACK
+      // "hors périmètre" (le plus fréquent, pour tout message qui n'est ni VILLE_CREATED ni
+      // VILLE_MOVED). Avant ce correctif, ce XACK précoce était HORS du try/catch : si la
+      // connexion Redis se fermait (disconnect() à l'arrêt de l'application) pendant que ce
+      // XACK précis était en vol, la rejection résultante n'avait aucun handler nulle part
+      // dans la chaîne d'appel (runReadLoop ne catch pas handleMessage, onModuleInit utilise
+      // `void this.runReadLoop()` qui ignore délibérément la Promise) — une unhandled
+      // rejection qui faisait planter le PROCESSUS NODE ENTIER, pas juste ce service. C'est
+      // exactement le crash observé au premier vrai passage de test:e2e après la correction
+      // du bug de double-versionnement : les 7 tests passaient, mais le nettoyage plantait.
       this.logger.warn(
         `Échec de traitement du message ${id} (compteur villes) : ${error instanceof Error ? error.message : String(error)}`,
       );

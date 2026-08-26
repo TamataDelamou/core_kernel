@@ -43,8 +43,14 @@ export class OutboxRelayService implements OnModuleInit, OnModuleDestroy {
     const pollIntervalMs = this.configService.get('outbox.pollIntervalMs', { infer: true }) as number;
     const sweepIntervalMs = pollIntervalMs * 20; // balayage des échecs permanents moins fréquent
 
-    this.pollTimer = setInterval(() => void this.runCycle(), pollIntervalMs);
-    this.sweepTimer = setInterval(() => void this.sweepPermanentFailures(), sweepIntervalMs);
+    this.pollTimer = setInterval(
+      () => void this.runCycle().catch((error) => this.logger.error(`Cycle de relais inattendu : ${error instanceof Error ? error.message : String(error)}`)),
+      pollIntervalMs,
+    );
+    this.sweepTimer = setInterval(
+      () => void this.sweepPermanentFailures().catch((error) => this.logger.error(`Balayage des échecs permanents inattendu : ${error instanceof Error ? error.message : String(error)}`)),
+      sweepIntervalMs,
+    );
   }
 
   async onModuleDestroy(): Promise<void> {

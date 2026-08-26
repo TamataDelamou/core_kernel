@@ -56,10 +56,15 @@ export class RedisStreamsConsumerService implements OnModuleInit, OnModuleDestro
 
   async onModuleInit(): Promise<void> {
     await this.ensureConsumerGroupExists();
-    void this.runReadLoop();
+    void this.runReadLoop().catch((error) =>
+      this.logger.error(`Boucle de lecture interrompue de façon inattendue : ${error instanceof Error ? error.message : String(error)}`),
+    );
 
     const claimIntervalMs = this.configService.get('audit.claimIntervalMs', { infer: true }) as number;
-    this.claimTimer = setInterval(() => void this.runClaimCycle(), claimIntervalMs);
+    this.claimTimer = setInterval(
+      () => void this.runClaimCycle().catch((error) => this.logger.error(`Cycle de réclamation inattendu : ${error instanceof Error ? error.message : String(error)}`)),
+      claimIntervalMs,
+    );
   }
 
   async onModuleDestroy(): Promise<void> {
