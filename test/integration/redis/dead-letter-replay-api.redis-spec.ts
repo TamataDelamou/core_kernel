@@ -1,6 +1,6 @@
 import { INestApplication, ValidationPipe, VersioningType } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import * as request from 'supertest';
+import request from 'supertest';
 import { v4 as uuidv4 } from 'uuid';
 import { isolateRedisNamespaceForThisFile } from './redis-test-helpers';
 import { AppModule } from '../../../src/app.module';

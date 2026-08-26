@@ -70,6 +70,7 @@ describe('Catalogue — cycle de vie complet jusqu\'à l\'archivage', () => {
   it('parcourt brouillon → valide → publie → archive sans erreur', () => {
     const catalogue = Catalogue.create({
       id: 'cat-1',
+      produitId: 'produit-1',
       nom: 'Catalogue Guinée',
       scope: CatalogueScope.zoneGeographique('pays-gn'),
     });
@@ -84,6 +85,7 @@ describe('Catalogue — cycle de vie complet jusqu\'à l\'archivage', () => {
   it('la désactivation (estActif) est indépendante du statut de workflow', () => {
     const catalogue = Catalogue.create({
       id: 'cat-1',
+      produitId: 'produit-1',
       nom: 'Test',
       scope: CatalogueScope.portefeuilleGlobal(),
     });

@@ -15,7 +15,8 @@ const CONFIG_VALUES: Record<string, unknown> = {
   'eventBus.streamPrefix': 'gsg.kernel.events',
 };
 
-type ConsumerInternals = VilleRattacheeConsumerService & {
+// Voir la note dans outbox-relay-cycle.spec.ts — même piège TypeScript, même correctif.
+type ConsumerInternals = Omit<VilleRattacheeConsumerService, 'redis'> & {
   redis: { xack: jest.Mock };
   handleMessage: (id: string, fields: string[]) => Promise<void>;
 };

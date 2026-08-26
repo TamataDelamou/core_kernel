@@ -17,7 +17,8 @@ const CONFIG_VALUES: Record<string, unknown> = {
   'eventBus.streamPrefix': 'gsg.kernel.events',
 };
 
-type ConsumerInternals = RedisStreamsConsumerService & {
+// Voir la note dans outbox-relay-cycle.spec.ts — même piège, même correctif (Omit avant intersection).
+type ConsumerInternals = Omit<RedisStreamsConsumerService, 'redis'> & {
   redis: { xack: jest.Mock };
   handleMessage: (id: string, fields: string[], deliveryAttempt: number) => Promise<void>;
   parseFields: (fields: string[]) => unknown;

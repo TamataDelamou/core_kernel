@@ -6,6 +6,7 @@ import {
 import { CATALOGUE_REPOSITORY } from '../../../src/product/domain/repositories/product.repositories';
 import { EVENT_PUBLISHER } from '../../../src/common/kernel-ports/event-publisher.interface';
 import { ORGANISATION_LOOKUP_PORT } from '../../../src/common/kernel-ports/organisation-lookup.port';
+import { PRODUCT_LOOKUP_PORT } from '../../../src/common/kernel-ports/product-lookup.port';
 import {
   CatalogueAccessDeniedError,
   CatalogueNotFoundError,
@@ -22,12 +23,18 @@ describe('CreateCatalogueUseCase (intégration application) — validation du sc
         { provide: CATALOGUE_REPOSITORY, useValue: { save: saveMock } },
         { provide: EVENT_PUBLISHER, useValue: { publish: jest.fn() } },
         { provide: ORGANISATION_LOOKUP_PORT, useValue: { existsAndActive: jest.fn().mockResolvedValue(false) } },
+        { provide: PRODUCT_LOOKUP_PORT, useValue: { existsAndActive: jest.fn().mockResolvedValue(true) } },
       ],
     }).compile();
 
     const useCase = moduleRef.get(CreateCatalogueUseCase);
     await expect(
-      useCase.execute({ nom: 'Catalogue Org X', scopeType: 'organisation', scopeCibleId: 'org-inexistante' }),
+      useCase.execute({
+        produitId: 'produit-1',
+        nom: 'Catalogue Org X',
+        scopeType: 'organisation',
+        scopeCibleId: 'org-inexistante',
+      }),
     ).rejects.toThrow(OrganisationScopeNotFoundError);
     expect(saveMock).not.toHaveBeenCalled();
   });
@@ -40,11 +47,13 @@ describe('CreateCatalogueUseCase (intégration application) — validation du sc
         { provide: CATALOGUE_REPOSITORY, useValue: { save: saveMock } },
         { provide: EVENT_PUBLISHER, useValue: { publish: jest.fn().mockResolvedValue(undefined) } },
         { provide: ORGANISATION_LOOKUP_PORT, useValue: { existsAndActive: jest.fn().mockResolvedValue(true) } },
+        { provide: PRODUCT_LOOKUP_PORT, useValue: { existsAndActive: jest.fn().mockResolvedValue(true) } },
       ],
     }).compile();
 
     const useCase = moduleRef.get(CreateCatalogueUseCase);
     const result = await useCase.execute({
+      produitId: 'produit-1',
       nom: 'Catalogue Org Valide',
       scopeType: 'organisation',
       scopeCibleId: 'org-1',
@@ -62,11 +71,12 @@ describe('CreateCatalogueUseCase (intégration application) — validation du sc
         { provide: CATALOGUE_REPOSITORY, useValue: { save: jest.fn().mockResolvedValue(undefined) } },
         { provide: EVENT_PUBLISHER, useValue: { publish: jest.fn().mockResolvedValue(undefined) } },
         { provide: ORGANISATION_LOOKUP_PORT, useValue: { existsAndActive: existsAndActiveMock } },
+        { provide: PRODUCT_LOOKUP_PORT, useValue: { existsAndActive: jest.fn().mockResolvedValue(true) } },
       ],
     }).compile();
 
     const useCase = moduleRef.get(CreateCatalogueUseCase);
-    await useCase.execute({ nom: 'Catalogue Global', scopeType: 'portefeuille_global' });
+    await useCase.execute({ produitId: 'produit-1', nom: 'Catalogue Global', scopeType: 'portefeuille_global' });
 
     expect(existsAndActiveMock).not.toHaveBeenCalled();
   });
@@ -76,6 +86,7 @@ describe('AssertOrganisationCanAccessCatalogueUseCase (intégration application)
   function buildCatalogueOrganisation(cibleId: string): Catalogue {
     return Catalogue.reconstitute({
       id: 'catalogue-1',
+      produitId: 'produit-1',
       nom: 'Catalogue Groupe X',
       scope: CatalogueScope.organisation(cibleId),
       estActif: true,
@@ -88,6 +99,7 @@ describe('AssertOrganisationCanAccessCatalogueUseCase (intégration application)
   it('un catalogue "portefeuille_global" est TOUJOURS accessible, sans consulter Org Registry', async () => {
     const catalogueGlobal = Catalogue.reconstitute({
       id: 'catalogue-global',
+      produitId: 'produit-1',
       nom: 'Global',
       scope: CatalogueScope.portefeuilleGlobal(),
       estActif: true,
@@ -162,6 +174,7 @@ describe('AssertOrganisationCanAccessCatalogueUseCase (intégration application)
   it('un catalogue "zone_geographique" est accessible sans consulter la hiérarchie organisationnelle', async () => {
     const catalogueGeo = Catalogue.reconstitute({
       id: 'catalogue-geo',
+      produitId: 'produit-1',
       nom: 'Catalogue Guinée',
       scope: CatalogueScope.zoneGeographique('pays-gn'),
       estActif: true,

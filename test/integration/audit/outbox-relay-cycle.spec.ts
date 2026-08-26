@@ -13,7 +13,13 @@ const CONFIG_VALUES: Record<string, unknown> = {
   'eventBus.streamPrefix': 'gsg.kernel.events',
 };
 
-type RelayInternals = OutboxRelayService & {
+// Omit<..., 'redis'> avant d'intersecter : OutboxRelayService déclare `redis` en `private`,
+// et TypeScript réduit une intersection à `never` dès que la MÊME clé existe des deux côtés
+// avec une modificateur d'accès différent (même type sous-jacent, incompatibilité purement
+// nominale). Sans ce Omit, aucune propriété de RelayInternals n'est jamais accessible — le
+// bug est resté invisible ici faute de compilateur TypeScript réel disponible en écriture,
+// seulement détecté au premier vrai passage CI (tsc via `npm run build`).
+type RelayInternals = Omit<OutboxRelayService, 'redis'> & {
   redis: { xadd: jest.Mock };
   runCycle: () => Promise<void>;
   sweepPermanentFailures: () => Promise<void>;
