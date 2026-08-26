@@ -24,7 +24,9 @@ describe('Auth (e2e) — parcours register → login → refresh', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('api/v1');
+    // 'api' seul — enableVersioning() ajoute déjà le segment /v1. Voir configuration.ts pour
+    // l'explication complète du bug de double-versionnement que ceci corrige.
+    app.setGlobalPrefix('api');
     app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
     await app.init();

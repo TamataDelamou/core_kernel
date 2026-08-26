@@ -94,7 +94,13 @@ export interface AppConfiguration {
 export default (): AppConfiguration => ({
   env: process.env.NODE_ENV ?? 'development',
   port: parseInt(process.env.PORT ?? '3000', 10),
-  apiGlobalPrefix: process.env.API_GLOBAL_PREFIX ?? 'api/v1',
+  // 'api' seul, PAS 'api/v1' : app.enableVersioning() (main.ts) insère déjà un segment de
+  // version entre le préfixe global et le contrôleur — l'ordre NestJS est toujours
+  // {préfixe global}/{version}/{contrôleur}/{méthode}. Avec 'api/v1' ici ET la version '1'
+  // ajoutée par enableVersioning, la route réelle devenait /api/v1/v1/... au lieu de
+  // /api/v1/... — bug découvert au premier vrai passage de test:e2e (jamais visible dans les
+  // tests mockés, qui n'exercent jamais le routage HTTP réel).
+  apiGlobalPrefix: process.env.API_GLOBAL_PREFIX ?? 'api',
   database: {
     host: process.env.DB_HOST ?? 'localhost',
     port: parseInt(process.env.DB_PORT ?? '5432', 10),

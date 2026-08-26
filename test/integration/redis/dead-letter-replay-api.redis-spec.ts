@@ -39,7 +39,8 @@ describe('[Redis physique/e2e] Rejeu manuel d\'une entrée DLQ via POST /v1/audi
     moduleFixture = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
     app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('api/v1');
+    // 'api' seul — enableVersioning() ajoute déjà le segment /v1 (voir configuration.ts).
+    app.setGlobalPrefix('api');
     app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
     await app.init();
