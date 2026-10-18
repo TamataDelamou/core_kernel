@@ -8,6 +8,9 @@ import {
   Max,
   Min,
   MinLength,
+  Matches,
+  IsUrl,
+  ValidateIf,
   validateSync,
 } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
@@ -78,6 +81,69 @@ class EnvironmentVariables {
       'SUPABASE_ALLOWED_PROJECT_URLS est requis (liste blanche séparée par des virgules, anti-SSRF).',
   })
   SUPABASE_ALLOWED_PROJECT_URLS!: string;
+
+  @IsOptional()
+  @IsBooleanString()
+  REPORTING_INGEST_ENABLED?: string;
+
+  @ValidateIf((value: EnvironmentVariables) => value.REPORTING_INGEST_ENABLED === 'true')
+  @IsString()
+  @IsNotEmpty()
+  REPORTING_JWT_ISSUER?: string;
+
+  @ValidateIf((value: EnvironmentVariables) => value.REPORTING_INGEST_ENABLED === 'true')
+  @IsUrl({ protocols: ['https'], require_protocol: true })
+  REPORTING_JWT_JWKS_URL?: string;
+
+  @ValidateIf((value: EnvironmentVariables) => value.REPORTING_INGEST_ENABLED === 'true')
+  @IsString()
+  @IsNotEmpty()
+  REPORTING_JWT_AUDIENCE?: string;
+
+  @ValidateIf((value: EnvironmentVariables) => value.REPORTING_INGEST_ENABLED === 'true')
+  @IsString()
+  @IsNotEmpty()
+  REPORTING_JWKS_ALLOWED_HOSTS?: string;
+
+  @ValidateIf((value: EnvironmentVariables) => value.REPORTING_INGEST_ENABLED === 'true')
+  @Matches(/^[a-z][a-z0-9-]{1,63}:[a-z][a-z0-9-]{1,95}:(development|test|staging|production)(,[a-z][a-z0-9-]{1,63}:[a-z][a-z0-9-]{1,95}:(development|test|staging|production))*$/)
+  REPORTING_ALLOWED_WORKLOADS?: string;
+
+  @ValidateIf((value: EnvironmentVariables) => value.REPORTING_INGEST_ENABLED === 'true')
+  @Matches(/^[a-z][a-z0-9]*(\.[a-z0-9_-]+){1,7}(,[a-z][a-z0-9]*(\.[a-z0-9_-]+){1,7})*$/)
+  REPORTING_ALLOWED_AUDIT_EVENT_TYPES?: string;
+
+  @IsOptional()
+  @Matches(/^(RS256|ES256)(,(RS256|ES256))*$/)
+  REPORTING_JWT_ALGORITHMS?: string;
+
+  @ValidateIf((value: EnvironmentVariables) => value.REPORTING_INGEST_ENABLED === 'true')
+  @IsInt()
+  @Min(1)
+  REPORTING_AUDIT_RETENTION_DAYS?: number;
+
+  @ValidateIf((value: EnvironmentVariables) => value.REPORTING_INGEST_ENABLED === 'true')
+  @IsInt()
+  @Min(1)
+  REPORTING_METRICS_RETENTION_DAYS?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(500)
+  REPORTING_MAX_AUDIT_BATCH_ITEMS?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  REPORTING_MAX_METRIC_BATCH_ITEMS?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  REPORTING_MAX_METRICS_PER_SNAPSHOT?: number;
 }
 
 export function validateEnvironment(config: Record<string, unknown>): EnvironmentVariables {
@@ -99,6 +165,24 @@ export function validateEnvironment(config: Record<string, unknown>): Environmen
     if (validatedConfig.JWT_ACCESS_SECRET === validatedConfig.JWT_REFRESH_SECRET) {
       throw new Error(
         'JWT_ACCESS_SECRET et JWT_REFRESH_SECRET doivent être distincts en production.',
+      );
+    }
+  }
+
+  if (validatedConfig.REPORTING_INGEST_ENABLED === 'true') {
+    let jwksUrl: URL;
+    try {
+      jwksUrl = new URL(validatedConfig.REPORTING_JWT_JWKS_URL ?? '');
+    } catch {
+      throw new Error('REPORTING_JWT_JWKS_URL doit être une URL HTTPS valide.');
+    }
+    const allowedHosts = (validatedConfig.REPORTING_JWKS_ALLOWED_HOSTS ?? '')
+      .split(',')
+      .map((host) => host.trim().toLowerCase())
+      .filter(Boolean);
+    if (jwksUrl.protocol !== 'https:' || !allowedHosts.includes(jwksUrl.hostname.toLowerCase())) {
+      throw new Error(
+        'REPORTING_JWT_JWKS_URL doit utiliser HTTPS et son hôte doit figurer dans REPORTING_JWKS_ALLOWED_HOSTS.',
       );
     }
   }

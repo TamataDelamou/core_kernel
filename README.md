@@ -160,6 +160,12 @@ L'API écoute par défaut sur `http://localhost:3000/api/v1`.
 | PATCH | `/v1/users/me/referentiel` | Met à jour pays/langue/devise/fuseau horaire | JWT |
 | POST | `/v1/users/:gsgId/roles` | Attribution de rôle | JWT + rôle `kernel.admin` ou `org.owner` |
 | POST | `/v1/external-identities/link` | Liaison identité externe (KER-ID-02) | JWT |
+| POST | `/v1/control-plane/reporting/audit-events/batch` | Réception d’audits applicatifs allowlistés et minimisés | JWT workload + `reporting.audit.write` |
+| POST | `/v1/control-plane/reporting/metrics/snapshots/batch` | Réception de métriques techniques agrégées | JWT workload + `reporting.metrics.write` |
+
+### Reporting Control Plane interservices
+
+Les routes de reporting sont **désactivées par défaut** (`REPORTING_INGEST_ENABLED` absent ou différent de `true`). Avant toute activation, un issuer workload/PKI doit être désigné et configuré; les JWT utilisateurs GSG ID et les sessions navigateur sont refusés. Il faut aussi déclarer explicitement les hôtes JWKS, les workloads, les types d’événements audit, les scopes et les durées de rétention. La migration additive, les limites de payload et le processus d’activation sont décrits dans [`docs/architecture/Implementation_Control_Plane_Reporting_2026-10-18.md`](docs/architecture/Implementation_Control_Plane_Reporting_2026-10-18.md). Aucun secret n’est documenté ici; la migration n’est pas exécutée tant qu’un environnement cible n’est pas approuvé.
 
 ### Prérequis pour `/v1/auth/sso/supabase`
 

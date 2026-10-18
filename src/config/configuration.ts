@@ -89,6 +89,21 @@ export interface AppConfiguration {
      */
     jwksForcedRefreshCooldownSeconds: number;
   };
+  reporting: {
+    ingestEnabled: boolean;
+    jwtIssuer: string;
+    jwtJwksUrl: string;
+    jwtAudience: string;
+    jwksAllowedHosts: string[];
+    allowedWorkloads: string[];
+    allowedAuditEventTypes: string[];
+    jwtAlgorithms: Array<'RS256' | 'ES256'>;
+    auditRetentionDays: number;
+    metricsRetentionDays: number;
+    maxAuditBatchItems: number;
+    maxMetricBatchItems: number;
+    maxMetricsPerSnapshot: number;
+  };
 }
 
 export default (): AppConfiguration => ({
@@ -168,5 +183,34 @@ export default (): AppConfiguration => ({
       process.env.SUPABASE_JWKS_FORCED_REFRESH_COOLDOWN_SECONDS ?? '10',
       10,
     ),
+  },
+  reporting: {
+    // No reporting endpoint accepts traffic until workload trust and retention are
+    // explicitly configured by the deployment owner.
+    ingestEnabled: process.env.REPORTING_INGEST_ENABLED === 'true',
+    jwtIssuer: process.env.REPORTING_JWT_ISSUER ?? '',
+    jwtJwksUrl: process.env.REPORTING_JWT_JWKS_URL ?? '',
+    jwtAudience: process.env.REPORTING_JWT_AUDIENCE ?? '',
+    jwksAllowedHosts: (process.env.REPORTING_JWKS_ALLOWED_HOSTS ?? '')
+      .split(',')
+      .map((host) => host.trim().toLowerCase())
+      .filter((host) => host.length > 0),
+    allowedWorkloads: (process.env.REPORTING_ALLOWED_WORKLOADS ?? '')
+      .split(',')
+      .map((workload) => workload.trim())
+      .filter((workload) => workload.length > 0),
+    allowedAuditEventTypes: (process.env.REPORTING_ALLOWED_AUDIT_EVENT_TYPES ?? '')
+      .split(',')
+      .map((eventType) => eventType.trim())
+      .filter((eventType) => eventType.length > 0),
+    jwtAlgorithms: (process.env.REPORTING_JWT_ALGORITHMS ?? 'RS256,ES256')
+      .split(',')
+      .map((algorithm) => algorithm.trim())
+      .filter((algorithm): algorithm is 'RS256' | 'ES256' => algorithm === 'RS256' || algorithm === 'ES256'),
+    auditRetentionDays: parseInt(process.env.REPORTING_AUDIT_RETENTION_DAYS ?? '0', 10),
+    metricsRetentionDays: parseInt(process.env.REPORTING_METRICS_RETENTION_DAYS ?? '0', 10),
+    maxAuditBatchItems: parseInt(process.env.REPORTING_MAX_AUDIT_BATCH_ITEMS ?? '100', 10),
+    maxMetricBatchItems: parseInt(process.env.REPORTING_MAX_METRIC_BATCH_ITEMS ?? '20', 10),
+    maxMetricsPerSnapshot: parseInt(process.env.REPORTING_MAX_METRICS_PER_SNAPSHOT ?? '50', 10),
   },
 });

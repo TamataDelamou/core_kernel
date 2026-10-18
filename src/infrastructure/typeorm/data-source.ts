@@ -27,6 +27,7 @@ export const AppDataSource = new DataSource({
     __dirname + '/../../referential-engine/infrastructure/persistence/typeorm/orm-entities{.ts,.js}',
     __dirname + '/../../product-registry/infrastructure/persistence/typeorm/orm-entities{.ts,.js}',
     __dirname + '/../../app-config/infrastructure/persistence/typeorm/orm-entities{.ts,.js}',
+    __dirname + '/../../reporting/infrastructure/persistence/typeorm/orm-entities{.ts,.js}',
     __dirname + '/../../common/kernel-infrastructure/outbox/outbox-event.orm-entity{.ts,.js}',
   ],
   migrations: [
@@ -38,6 +39,7 @@ export const AppDataSource = new DataSource({
     __dirname + '/../../referential-engine/infrastructure/persistence/migrations/*{.ts,.js}',
     __dirname + '/../../product-registry/infrastructure/persistence/migrations/*{.ts,.js}',
     __dirname + '/../../app-config/infrastructure/persistence/migrations/*{.ts,.js}',
+    __dirname + '/../../reporting/infrastructure/persistence/migrations/*{.ts,.js}',
     __dirname + '/../../common/kernel-infrastructure/persistence/migrations/*{.ts,.js}',
   ],
   synchronize: false,

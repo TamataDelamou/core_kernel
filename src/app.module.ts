@@ -14,6 +14,7 @@ import { AuditModule } from './audit/audit.module';
 import { ReferentialEngineModule } from './referential-engine/referential-engine.module';
 import { ProductRegistryModule } from './product-registry/product-registry.module';
 import { AppConfigModule } from './app-config/app-config.module';
+import { ReportingModule } from './reporting/reporting.module';
 import { KernelInfrastructureModule } from './common/kernel-infrastructure/kernel-infrastructure.module';
 import { TransactionInterceptor } from './common/interceptors/transaction.interceptor';
 import { JwtSharedModule } from './common/jwt-shared.module';
@@ -73,6 +74,7 @@ import { JwtSharedModule } from './common/jwt-shared.module';
     ProductRegistryModule,
     AppConfigModule,
     AuditModule,
+    ReportingModule,
   ],
   providers: [
     {
