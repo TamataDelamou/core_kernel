@@ -2,9 +2,11 @@
 
 **Destinataire :** Architecte du Kernel GSG  
 **Date :** 18 octobre 2026  
-**Version :** 0.1 — proposition à examiner; aucune décision architecturale n’est réputée signée.  
+**Version :** 0.2 — validation du propriétaire TradeLink enregistrée le 18 octobre 2026; arbitrages des référents A1–A8 en attente de signature.
 **Décisions propriétaires déjà explicites :** vision panafricaine; centralisation du Control Plane via Kernel GSG; démarrage par une recette isolée en Guinée puis progression par phases en Afrique de l’Ouest; protection prioritaire de l’intégrité des flux utilisateurs existants.  
-**État d’exécution :** code interservices préparé sur branches dédiées et désactivé par défaut; aucun issuer de recette, secret, certificat, base de recette ou déploiement n’a été provisionné. Aucune migration n’a été appliquée.
+**État d’exécution :** code interservices en état **DORMANT**, flags fermés; aucune identité de recette, secret, certificat, base de recette ou déploiement n’a été provisionné. Aucune migration n’a été appliquée. Le dépôt TradeLink `main` contient aussi le code après synchronisation automatique d’un checkpoint antérieur (commit `71cf061e`); le dépôt Kernel `main` reste au commit `59d59342`, antérieur à la branche de fonctionnalité. Aucun historique ne sera réécrit ni commit de code supplémentaire publié pendant ce gel.
+
+**Portée contractuelle :** l’approbation du propriétaire valide cette orientation et demande aux référents désignés de trancher. Elle ne constitue pas une signature au nom de l’architecte Kernel, de l’Architecte Sécurité, du DPO ou des Lead Devs. Le caractère opposable en interne dépend des règles de signature de l’organisation; toute prétention d’opposabilité juridique doit être confirmée par une personne habilitée en droit/contrats. Cette note n’est pas, à elle seule, un avis juridique ni un contrat exécuté.
 
 ## 1. Objet de la revue
 
@@ -22,22 +24,26 @@ Centraliser la gouvernance dès la conception, mais activer progressivement les 
 
 ## 3. Arbitres et décisions à confirmer
 
-| ID | Décision demandée | Recommandation de travail (non signée) | Arbitre principal | Statut |
+| ID | Décision demandée | Recommandation de travail (non signée) | Référent responsable (ID de rôle) | Statut |
 |---|---|---|---|---|
-| A1 | Propriétaire architectural du Control Plane et limites des modules historiques | Kernel GSG comme Control Plane; inventorier Identity/Referential et autres modules avant tout retrait ou déplacement. Aucun module historique n’est supprimé dans cette tranche. | Architecte Kernel + propriétaire plateforme | À arbitrer |
-| A2 | Identité machine de recette, pilote et production | Réutiliser un issuer workload asymétrique existant si l’architecture le possède; sinon utiliser la PKI/service mesh mTLS géré déjà approuvé. Ne créer ni bearer statique partagé ni issuer ad hoc dans TradeLink. Identités et audiences séparées par environnement. | Architecte sécurité/Kernel | À arbitrer |
-| A3 | Répertoire des applications, pays, régions et phases | Source de vérité centrale versionnée; statut de documentation distinct du statut de licence, configuration, test et activation. Instance ciblée par chaque identité machine. | Architecte Kernel | À arbitrer |
-| A4 | Contrat d’observabilité Push/Pull | Versionner OpenAPI/JSON Schema, scopes séparés, allowlists de champs et types, taille de lots, fenêtres, codes d’erreur, quotas, idempotence et réponse no-store. | Architecte API/Kernel | À arbitrer |
-| A5 | Politique des données | N’autoriser que métriques techniques agrégées et événements explicitement classifiés; conserver localement l’audit source. Exclure identité directe, KYC, texte libre, données commerciales détaillées et Score Business tant que V1–V4 restent non signés. | Sécurité + protection des données + propriétaires produit | À arbitrer |
-| A6 | Résidence, rétention et accès dashboard | Définir politiques par catégorie et juridiction, durée, capacité/quotas et règles de lecture; accès par RBAC super-admin et journaux d’accès, avec maker-checker pour les changements sensibles. | Gouvernance données + sécurité + architecte Kernel | À arbitrer |
-| A7 | Déclencheur et exploitation | Choisir un worker/Heartbeat externe durable, supervisé, avec backoff, file bornée, backpressure, revue manuelle, alertes et procédure de reprise. Pas de cron ni de timer en processus. | Architecte plateforme/SRE | À arbitrer |
-| A8 | Modèle de validation utilisateur | Adopter la matrice §6 comme gate de non-régression par module avant chaque phase. Une panne du Kernel ne doit pas bloquer une action locale. | Propriétaires produits + QA + sécurité | À arbitrer |
+| A1 | Propriétaire architectural du Control Plane et limites des modules historiques | Kernel GSG comme Control Plane; inventorier Identity/Referential et autres modules avant tout retrait ou déplacement. Aucun module historique n’est supprimé dans cette tranche. | `R-ARCH-K` — Architecte Kernel | À arbitrer — approbation propriétaire reçue; ratification requise |
+| A2 | Identité machine de recette, pilote et production | Réutiliser un issuer workload asymétrique existant si l’architecture le possède; sinon utiliser la PKI/service mesh mTLS géré déjà approuvé. Ne créer ni bearer statique partagé ni issuer ad hoc dans TradeLink. Identités et audiences séparées par environnement. | `R-SEC` — Architecte Sécurité | À arbitrer — approbation propriétaire reçue; ratification requise |
+| A3 | Répertoire des applications, pays, régions et phases | Source de vérité centrale versionnée; statut de documentation distinct du statut de licence, configuration, test et activation. Instance ciblée par chaque identité machine. | `R-ARCH-K` — Architecte Kernel | À arbitrer — approbation propriétaire reçue; ratification requise |
+| A4 | Contrat d’observabilité Push/Pull | Versionner OpenAPI/JSON Schema, scopes séparés, allowlists de champs et types, taille de lots, fenêtres, codes d’erreur, quotas, idempotence et réponse no-store. | `R-LD-K` — Lead Dev Kernel | À arbitrer — approbation propriétaire reçue; ratification requise |
+| A5 | Politique des données | N’autoriser que métriques techniques agrégées et événements explicitement classifiés; conserver localement l’audit source. Exclure identité directe, KYC, texte libre, données commerciales détaillées et Score Business tant que V1–V4 restent non signés. | `R-DPO` — Data Protection Officer | À arbitrer — approbation propriétaire reçue; ratification requise |
+| A6 | Résidence, rétention et accès dashboard | Définir politiques par catégorie et juridiction, durée, capacité/quotas et règles de lecture; accès par RBAC super-admin et journaux d’accès, avec maker-checker pour les changements sensibles. | `R-DPO` — Data Protection Officer | À arbitrer — approbation propriétaire reçue; ratification requise |
+| A7 | Déclencheur et exploitation | Choisir un worker/Heartbeat externe durable, supervisé, avec backoff, file bornée, backpressure, revue manuelle, alertes et procédure de reprise. Pas de cron ni de timer en processus. | `R-LD-K` — Lead Dev Kernel | À arbitrer — approbation propriétaire reçue; ratification requise |
+| A8 | Modèle de validation utilisateur | Adopter la matrice §6 comme gate de non-régression par module avant chaque phase. Une panne du Kernel ne doit pas bloquer une action locale. | `R-LD-TL` — Lead Dev TradeLink | À arbitrer — approbation propriétaire reçue; ratification requise |
+
+Les ID de référent sont attribués; les personnes nominatives restent à désigner par l’architecte/secrétariat de gouvernance. Référentiel des rôles : `R-ARCH-K` = Architecte Kernel; `R-SEC` = Architecte Sécurité; `R-LD-K` = Lead Dev Kernel; `R-DPO` = Data Protection Officer; `R-LD-TL` = Lead Dev TradeLink. Chaque personne désignée devra confirmer son acceptation du rôle et son pouvoir de signature.
+
+**Règle de statut et de gel :** la validation du propriétaire est reçue, mais A1–A8 restent `À arbitrer` jusqu’à la décision et à la signature vérifiable de chaque référent attribué; ajouter nom, date, décision/preuve et référence de signature. Le code Control Plane reste **DORMANT** et aucune modification du code fonctionnel, activation, provisionnement ou migration ne peut être faite pendant cette période. Le gel ne peut être levé qu’après passage explicite de chacune des huit lignes à `Validé` et une autorisation distincte de démarrer la Phase 1. Toute modification du contrat exige une nouvelle revue.
 
 ## 4. Phases et critères de passage
 
 | Phase | Périmètre | Gates minimales de sortie |
 |---|---|---|
-| 0 — Arbitrage | ADR, responsabilités, modèle multi-région, identité, données, contrat, rétention et orchestration | Décisions A1–A8 signées ou explicitement différées avec responsable; contrat API versionné; risques et propriétaires identifiés |
+| 0 — Arbitrage | ADR, responsabilités, modèle multi-région, identité, données, contrat, rétention et orchestration | A1–A8 nominativement attribués, signés et `Validé`; contrat API versionné; risques et owners enregistrés. Toute ligne différée reste un blocage à la Phase 1 et maintient le code `DORMANT`. |
 | 1 — Laboratoire isolé | Kernel et TradeLink de test, bases dédiées, données synthétiques et identité workload/PKI de test | Aucun chemin réseau vers production; migrations up/down réversibles testées; refus croisés environnement/instance démontrés; aucune donnée personnelle |
 | 2 — Recette Guinée | Première instance non-production, sans flux de paiement; collecte et lecture limitées à l’observabilité approuvée | Matrice d’intégrité réussie; comportement de panne/reprise, quota, idempotence et rétention démontrés; procès-verbal signé par architecte et propriétaires |
 | 3 — Extension Afrique de l’Ouest | Un pays à la fois ou petites vagues justifiées; gouvernance centralisée et périmètres locaux explicites | Dossier d’admission local par pays; preuve d’autorisation/configuration/recette distincte; revue de résidence et d’exploitation; maker-checker par vague |
@@ -102,23 +108,27 @@ Les noms, versions et payloads doivent être comparés aux contrats finaux de l�
 
 ## 9. Formulaire de retour de revue
 
-L’architecte peut annoter chaque ligne et confirmer la décision, le propriétaire et la preuve attendue.
+L’approbation du propriétaire TradeLink est consignée ci-dessous. Chaque référent remplit sa ligne, ajoute son nom/autorité, sa décision et sa signature vérifiable. Le statut reste `À arbitrer` tant que la ligne n’est pas signée; seuls les responsables des rôles désignés peuvent faire passer leur ligne à `Validé`.
 
-| ID | Décision / commentaire de l’architecte | Propriétaire nommé | Preuve / livrable | Statut / date |
-|---|---|---|---|---|
-| A1 | À compléter en revue |  |  | En attente |
-| A2 | À compléter en revue |  |  | En attente |
-| A3 | À compléter en revue |  |  | En attente |
-| A4 | À compléter en revue |  |  | En attente |
-| A5 | À compléter en revue |  |  | En attente |
-| A6 | À compléter en revue |  |  | En attente |
-| A7 | À compléter en revue |  |  | En attente |
-| A8 | À compléter en revue |  |  | En attente |
+| ID | Décision / commentaire du référent | ID de rôle / propriétaire | Nom du signataire et autorité | Signature / date | Preuve / référence | Statut |
+|---|---|---|---|---|---|---|
+| A1 | À compléter | `R-ARCH-K` |  |  |  | À arbitrer |
+| A2 | À compléter | `R-SEC` |  |  |  | À arbitrer |
+| A3 | À compléter | `R-ARCH-K` |  |  |  | À arbitrer |
+| A4 | À compléter | `R-LD-K` |  |  |  | À arbitrer |
+| A5 | À compléter | `R-DPO` |  |  |  | À arbitrer |
+| A6 | À compléter | `R-DPO` |  |  |  | À arbitrer |
+| A7 | À compléter | `R-LD-K` |  |  |  | À arbitrer |
+| A8 | À compléter | `R-LD-TL` |  |  |  | À arbitrer |
+
+**Approbation du propriétaire :** validée par le propriétaire TradeLink le 18 octobre 2026; cette approbation n’est pas la signature des référents ci-dessus.
+**Ratification juridique/organisationnelle :** nom et signature d’une personne habilitée à engager les équipes/l’organisation : ____________________ ; fonction : ____________________ ; date/référence : ____________________. L’opposabilité juridique doit être confirmée par la fonction juridique habilitée; ne pas la déduire de l’approbation produit.
 
 ## 10. Liens de contexte
 
 - [Plan de gouvernance panafricaine, phases et recette isolée](Plan_Gouvernance_Panafricaine_Control_Plane_Recette_2026-10-18.md)
+- [Plan opératoire non-exécutoire de préparation Phase 1](Plan_Recette_Isolee_Phase1_Control_Plane_2026-10-18.md)
 - [Proposition initiale du contrat Control Plane](Proposition_Control_Plane_Reporting_Interservices_2026-10-18.md)
 - [Rapport d’implémentation Kernel](Implementation_Control_Plane_Reporting_2026-10-18.md)
 
-**Décision demandée maintenant :** revue architecturale de cette note et désignation des propriétaires/décisions A1–A8. Cette revue ne constitue pas un feu vert à créer des credentials, ouvrir les réseaux, appliquer les migrations, connecter des instances ou activer les routes.
+**Décision demandée maintenant :** l’architecte/secrétariat désigne les personnes portant les rôles référents, puis chaque référent signe sa ligne; le statut passe à `Validé` seulement après signature et preuve. Jusqu’à ce que les huit lignes soient ainsi validées, le code reste dormant et la Phase 1 n’est que planifiée; aucun credential, réseau, migration, endpoint ou instance de recette ne doit être créé/activé. L’approbation propriétaire est acquise; le contrat interne et sa portée opposable restent soumis aux règles de signature et à la revue juridique/organisationnelle habilitée.
