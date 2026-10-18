@@ -167,6 +167,8 @@ L'API écoute par défaut sur `http://localhost:3000/api/v1`.
 
 Les routes de reporting sont **désactivées par défaut** (`REPORTING_INGEST_ENABLED` absent ou différent de `true`). Avant toute activation, un issuer workload/PKI doit être désigné et configuré; les JWT utilisateurs GSG ID et les sessions navigateur sont refusés. Il faut aussi déclarer explicitement les hôtes JWKS, les workloads, les types d’événements audit, les scopes et les durées de rétention. La migration additive, les limites de payload et le processus d’activation sont décrits dans [`docs/architecture/Implementation_Control_Plane_Reporting_2026-10-18.md`](docs/architecture/Implementation_Control_Plane_Reporting_2026-10-18.md). Aucun secret n’est documenté ici; la migration n’est pas exécutée tant qu’un environnement cible n’est pas approuvé.
 
+La gouvernance panafricaine, la recette isolée Guinée puis Afrique de l’Ouest, les gates de déploiement et la matrice d’intégrité des parcours utilisateurs sont détaillées dans [`docs/architecture/Plan_Gouvernance_Panafricaine_Control_Plane_Recette_2026-10-18.md`](docs/architecture/Plan_Gouvernance_Panafricaine_Control_Plane_Recette_2026-10-18.md). Les arbitrages A1–A8 à examiner par l’architecte sont préparés dans [`docs/architecture/Note_Arbitrage_Architecte_Gouvernance_Regionale_Control_Plane_2026-10-18.md`](docs/architecture/Note_Arbitrage_Architecte_Gouvernance_Regionale_Control_Plane_2026-10-18.md); aucune décision de la note n’est réputée approuvée.
+
 ### Prérequis pour `/v1/auth/sso/supabase`
 
 - Le projet Supabase du produit appelant doit être ajouté à `SUPABASE_ALLOWED_PROJECT_URLS`
